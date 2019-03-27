@@ -2,21 +2,23 @@
 
 buildscript {
 
-    ext {
-        kotlin_version = '1.2.71'
-        dagger_version = '2.16'
-    }
-
     repositories {
         google()
         jcenter()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://maven.fabric.io/public" }
     }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath LibrariesAllProjects.googleServices
+        classpath LibrariesAllProjects.firebase
+        classpath LibrariesAllProjects.errorProne
+        classpath LibrariesAllProjects.jacoco
+        classpath LibrariesAllProjects.fabric
+        classpath LibrariesAllProjects.kotlinAndroid
     }
 }
 
@@ -24,6 +26,9 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
+        flatDir { dirs 'libs' }
+        maven { url "https://jitpack.io" }
     }
 }
 

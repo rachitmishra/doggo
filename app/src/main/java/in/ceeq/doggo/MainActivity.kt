@@ -3,98 +3,139 @@ package `in`.ceeq.doggo
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
 import android.support.v7.app.AppCompatActivity
 import android.util.JsonReader
-import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.URL
+import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
 
 
 class MainActivity : AppCompatActivity() {
 
-  private val doggoUrl = URL("https://dog.ceo/api/breeds/image/random")
+    lateinit var job: Job
+    private val doggoUrl = URL("https://dog.ceo/api/breeds/image/random")
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-    fun getDoggo() {
-      Handler(HandlerThread("bg").apply { start() }.looper).post {
-        randomDoggo(doggoUrl)
-      }
+        fun getDoggo() {
+            //      Handler(HandlerThread("bg").apply { start() }.looper).post {
+            //        randomDoggo(doggoUrl)
+            //      }
+
+             Executors.newSingleThreadExecutor().execute {
+                    randomDoggo(doggoUrl)
+                  }
+
+            randomDoggo(doggoUrl)
+        }
+
+        button.setOnClickListener {
+            getDoggo()
+        }
+
+        getDoggo()
     }
 
-    button.setOnClickListener {
-      getDoggo()
+
+    private fun randomDoggo(url: URL) {
+        job = CoroutineScope(Dispatchers.Main).launch {
+            val doggoUrl =  withContext(Dispatchers.IO) { get(url, this@MainActivity::getUrlFromJson) }
+            val bitmap = withContext(Dispatchers.IO) { get(URL(doggoUrl), this@MainActivity::getBitmap) }
+            setImage(bitmap)
+        }
     }
 
-    getDoggo()
-  }
+    private fun setImage(bm: Bitmap?) {
+        image?.apply {
+            setImageBitmap(bm)
+        }
+    }
 
-  private fun randomDoggo(url: URL) {
-    fetch(url) { jsonStream ->
-      jsonStream?.let {
-        val doggoUrl = getUrlFromJson(jsonStream)
-        Log.e("Doggo", doggoUrl)
+    private fun getBitmap(input: InputStream?): Bitmap {
+        return BitmapFactory.decodeStream(input)
+    }
 
-        fetch(URL(doggoUrl)) { imageStream ->
-          imageStream?.let {
-            val bitmap: Bitmap = BitmapFactory.decodeStream(imageStream)
-            runOnUiThread {
-              image?.apply {
-                setImageBitmap(bitmap)
-              }
+    private fun <T> get(url: URL, task: (InputStream?) -> T): T? {
+        val urlConnection = prepareConnection(url)
+
+        return urlConnection?.run {
+            try {
+                connect()
+                if (responseCode != HttpsURLConnection.HTTP_OK) {
+                    throw IOException("HTTP error code: $responseCode")
+                }
+                return@run task(inputStream)
+            } finally {
+                inputStream?.close()
+                disconnect()
             }
-          }
         }
-      }
     }
-  }
 
-  private fun fetch(url: URL, task: (InputStream?) -> Unit) {
-    var connection: HttpsURLConnection? = null
-    try {
-      connection = (url.openConnection() as? HttpsURLConnection)?.apply {
-        readTimeout = 3000
-        connectTimeout = 3000
-        requestMethod = "GET"
-        doInput = true
-        connect()
-        if (responseCode != HttpsURLConnection.HTTP_OK) {
-          throw IOException("HTTP error code: $responseCode")
+//    private suspend fun <T> get(url: URL, task: (InputStream?) -> T): T? {
+//        return withContext(Dispatchers.IO) {
+//            val urlConnection = prepareConnection(url)
+//            urlConnection?.run {
+//                try {
+//                    connect()
+//                    if (responseCode != HttpsURLConnection.HTTP_OK) {
+//                        throw IOException("HTTP error code: $responseCode")
+//                    }
+//                    task(inputStream)
+//                } finally {
+//                    urlConnection.inputStream?.close()
+//                    urlConnection.disconnect()
+//                }
+//            }
+//        }
+//    }
+
+    private fun prepareConnection(url: URL): HttpsURLConnection? {
+        val result = runCatching {
+            (url.openConnection() as? HttpsURLConnection)?.apply {
+                readTimeout = 3000
+                connectTimeout = 3000
+                requestMethod = "GET"
+                doInput = true
+            }
         }
 
-        task(inputStream)
-      }
-    } finally {
-      connection?.inputStream?.close()
-      connection?.disconnect()
+        return result.getOrNull()
     }
-  }
 
-  @Throws(IOException::class)
-  private fun getUrlFromJson(input: InputStream): String {
-    var url = ""
-    val reader = JsonReader(InputStreamReader(input, "UTF-8"))
-    reader.use { jsonReader ->
-      jsonReader.beginObject()
-      while (jsonReader.hasNext()) {
-        val name = jsonReader.nextName()
-        if (name == "message") {
-          url = jsonReader.nextString()
-        } else {
-          jsonReader.skipValue()
+    @Throws(IOException::class)
+    private fun getUrlFromJson(input: InputStream?): String {
+        if (null == input) {
+            return ""
         }
-      }
-      jsonReader.endObject()
-      return url
+
+        var url = ""
+        val reader = JsonReader(InputStreamReader(input, "UTF-8"))
+        reader.use { jsonReader ->
+            jsonReader.beginObject()
+            while (jsonReader.hasNext()) {
+                val name = jsonReader.nextName()
+                if (name == "message") {
+                    url = jsonReader.nextString()
+                } else {
+                    jsonReader.skipValue()
+                }
+            }
+            jsonReader.endObject()
+            return url
+        }
     }
-  }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
 }
 

@@ -23,16 +23,61 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.android.support:design:28.0.0"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation "io.reactivex.rxjava2:rxandroid:2.0.2"
-    implementation "io.reactivex.rxjava2:rxjava:2.1.9"
-    implementation "com.google.dagger:dagger:$dagger_version"
-    implementation "com.google.dagger:dagger-android:$dagger_version"
-    implementation 'com.android.support:support-v4:28.0.0'
-    implementation 'com.android.support:recyclerview-v7:28.0.0'
-    kapt "com.google.dagger:dagger-compiler:$dagger_version"
-    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
+
+    implementation Libraries.supportv4
+    implementation Libraries.appcompatv7
+    implementation Libraries.kotlinStdLib
+    implementation Libraries.design
+    implementation Libraries.annotations
+    implementation Libraries.cardview
+    implementation Libraries.recyclerview
+    implementation Libraries.constraintlayout
+
+    implementation Libraries.firebaseAuth
+    implementation Libraries.firebaseStorage
+    implementation Libraries.firebaseDatabase
+    implementation Libraries.firebaseMessaging
+    implementation Libraries.firebaseConfig
+    implementation Libraries.firebaseCore
+    implementation Libraries.firebaseJobDispatcher
+
+    implementation Libraries.rxjavaAndroid
+    implementation Libraries.rxjava
+    implementation Libraries.retrofit
+    implementation Libraries.retrofitGsonConvertor
+    implementation Libraries.retrofitRxJavaAdapter
+    implementation Libraries.okhttp
+    implementation Libraries.okhttpLoggingInterceptor
+    implementation Libraries.gson
+
+    implementation Libraries.dagger
+    implementation Libraries.daggerAndroid
+    implementation Libraries.daggerAndroidSupport
+
+    implementation Libraries.archComponents
+    implementation Libraries.archComponentsReactive
+    implementation Libraries.archComponentsPaging
+
+    kapt AnnotationCompilers.archLifecylerCompiler
+    kapt AnnotationCompilers.daggerCompiler
+    kapt AnnotationCompilers.daggerAndroidProcessor
+    kapt AnnotationCompilers.daggerCompiler
+
+    testImplementation TestLibraries.junit
+    testImplementation TestLibraries.mockitoCore
+    testImplementation TestLibraries.mockitoInline
+    testImplementation TestLibraries.mockitoKotlin
+    testImplementation TestLibraries.hamcrestAll
+    testImplementation TestLibraries.powermockMockito
+    testImplementation TestLibraries.powermockJunit4
+    testImplementation TestLibraries.googleTruth
+    testImplementation TestLibraries.roboelectric
+    testImplementation TestLibraries.archCoreTesting
+    testImplementation TestLibraries.okhttpMockWebServer
+    testImplementation TestLibraries.retrofitMock
+    testImplementation TestLibraries.mockk
+
+    implementation Libraries.coroutinesCore
+    implementation Libraries.coroutinesAndroid
+    implementation Libraries.coroutinesRx2
 }
